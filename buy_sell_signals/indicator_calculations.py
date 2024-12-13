@@ -1,77 +1,50 @@
-import yfinance as yf
-import pandas as pd
 from ta.momentum import RSIIndicator
 from ta.trend import MACD
+import pandas as pd
+from data_loader import load_data
 
-# Fetch data from Yahoo Finance
-def fetch_data(symbol, start_date='2023-08-08', end_date='2024-01-01'):
-    data = yf.download(symbol, start=start_date, end=end_date)
-    return data
-
-# Calculate RSI
 def calculate_rsi(data, period=14):
-    # Ensure 'Close' is a Series (1-dimensional)
-    close_prices = data['Close'].squeeze()  # This ensures it's a 1-dimensional array/series
+    close_prices = data['Close'].squeeze()
+    
+    # Ensure there are enough data points for RSI calculation
+    if len(close_prices) < period:
+        print(f"Not enough data to calculate RSI. Need at least {period} data points.")
+        return pd.Series([None] * len(close_prices), index=close_prices.index)
+    
+    # Calculate RSI
     rsi = RSIIndicator(close_prices, window=period).rsi()
+    
+
     return rsi
 
-# Calculate MACD
 def calculate_macd(data):
-    # Ensure 'Close' is a Series (1-dimensional)
-    close_prices = data['Close'].squeeze()  # This ensures it's a 1-dimensional array/series
-
-    # Calculate MACD using the ta library
+    close_prices = data['Close'].squeeze() 
+    
+    # Ensure there are enough data points for MACD calculation
+    if len(close_prices) < 26:  # MACD typically requires at least 26 data points
+        print("Not enough data to calculate MACD. Need at least 26 data points.")
+        return pd.Series([None] * len(close_prices), index=close_prices.index), pd.Series([None] * len(close_prices), index=close_prices.index)
+    
+    # Calculate MACD and Signal Line
     macd = MACD(close_prices)
-
-    # Calculate MACD line and signal line
-    macd_line = macd.macd()  # MACD line (difference between fast and slow EMAs)
-    signal_line = macd.macd_signal()  # Signal line (EMA of the MACD line)
-
+    macd_line = macd.macd()
+    signal_line = macd.macd_signal()
+    
     return macd_line, signal_line
 
-
-# Generate buy and sell signals
-def generate_signals(data):
-    signals = pd.DataFrame(index=data.index)
-
-    # Calculate RSI and MACD
-    signals['RSI'] = calculate_rsi(data)
-    macd_line, signal_line = calculate_macd(data)
+def calculate_bollinger_bands(data, window=20, num_std_dev=2):
+    if len(data) < window:
+        print(f"Not enough data to calculate Bollinger Bands. Need at least {window} data points.")
+        return pd.Series([None] * len(data), index=data.index), pd.Series([None] * len(data), index=data.index), pd.Series([None] * len(data), index=data.index)
     
-    # Add MACD and Signal to the signals dataframe
-    signals['MACD'] = macd_line
-    signals['Signal'] = signal_line
-
-    # Buy and Sell signals based on RSI and MACD
-    signals['Buy'] = (signals['RSI'] < 40) | (signals['MACD'] > signals['Signal'])
-    signals['Sell'] = (signals['RSI'] > 60) & (signals['MACD'] < signals['Signal'])
+    # Calculate the rolling mean (Middle Band)
+    middle_band = data['Close'].rolling(window=window, min_periods=1).mean()
     
-    # Convert boolean to integer (1 for True, 0 for False)
-    signals['Buy'] = signals['Buy'].astype(int)
-    signals['Sell'] = signals['Sell'].astype(int)
-
-    return signals
-
-# Example usage
-if __name__ == "__main__":
-    symbol = "HDFCBANK.NS"  # Example NSE symbol
-    start_date = "2023-08-08"
-    end_date = "2024-01-01"
+    # Calculate the rolling standard deviation
+    rolling_std_dev = data['Close'].rolling(window=window, min_periods=1).std()
     
-    # Fetch stock data
-    stock_data = fetch_data(symbol, start_date=start_date, end_date=end_date)
-
-    if stock_data is not None:
-        print("\nStock Data (Head):")
-        print(stock_data.head())
-
-        # Generate signals
-        signals = generate_signals(stock_data)
-        
-        print("\nGenerated Signals (Buy=1, Sell=1):")
-        print(signals.tail())
-
-        # Summary of Buy and Sell signals
-        print("\nBuy/Sell Signal Summary:")
-        print(f"Buy Signals: {signals['Buy'].sum()}")
-        print(f"Sell Signals: {signals['Sell'].sum()}")
+    # Calculate the Upper and Lower Bands
+    upper_band = middle_band + (rolling_std_dev * num_std_dev)
+    lower_band = middle_band - (rolling_std_dev * num_std_dev)
+    
+    return upper_band, middle_band, lower_band
