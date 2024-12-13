@@ -9,6 +9,7 @@ import pandas as pd
 import plotly.express as px
 from wordcloud import WordCloud
 from datetime import datetime
+from matplotlib.colors import LinearSegmentedColormap
 
 # Download NLTK data
 nltk.download('stopwords')
@@ -113,9 +114,15 @@ if st.button("Analyze Sentiment"):
                 st.warning("No articles found for today.")
 
             # Word Cloud
+            # Custom colormap with green, blue, and red shades
+            colors = ["green", "yellow", "red"]  # Green, Blue, Red
+            custom_cmap = LinearSegmentedColormap.from_list("custom_cmap", colors)
+
+        # Word Cloud
             st.write("### Word Cloud from News Articles:")
             all_text = " ".join(df['Article'])
-            wordcloud = WordCloud(width=800, height=400, background_color='black').generate(all_text)
+            wordcloud = WordCloud(width=800, height=400, background_color='black', colormap=custom_cmap).generate(all_text)
+
             plt.figure(figsize=(10, 5))
             plt.imshow(wordcloud, interpolation='bilinear')
             plt.axis('off')
