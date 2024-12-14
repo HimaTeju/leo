@@ -1,7 +1,7 @@
 from ta.momentum import RSIIndicator
 from ta.trend import MACD
 import pandas as pd
-from data_loader import load_data
+from buy_sell_signals.data_loader import load_data
 
 def calculate_rsi(data, period=14):
     close_prices = data['Close'].squeeze()
