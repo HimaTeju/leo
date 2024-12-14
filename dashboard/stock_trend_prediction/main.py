@@ -22,7 +22,7 @@ def lstm():
     start_date_default = end_date_default - timedelta(days=365 * 10)  # 10 years ago
 
     # Input ticker
-    st.sidebar.header("Stock Selection")
+    st.sidebar.header("Predict Trends")
     stock_ticker = st.sidebar.text_input("Enter Stock Ticker (e.g., AAPL, TCS.NS, RELIANCE.BO):", "TCS.NS")
 
     # Date inputs with defaults
