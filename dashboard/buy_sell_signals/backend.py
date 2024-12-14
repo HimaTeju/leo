@@ -1,7 +1,6 @@
 import pandas as pd
-from data_loader import load_data
-from signal_generator import SignalGenerator
-from backtest import backtest
+from buy_sell_signals.data_loader import load_data
+from buy_sell_signals.signal_generator import SignalGenerator
 
 def fetch_stock_data(symbol, start_date, end_date):
     """Fetch stock data using the data_loader module."""

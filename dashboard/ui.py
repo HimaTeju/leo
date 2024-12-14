@@ -13,12 +13,15 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 from datetime import datetime
+from buy_sell_signals import ui_buy_sells
+from buy_sell_signals.ui_buy_sells import app
+from stock_trend_prediction.main import lstm
 
 # Streamlit App Configuration
 st.set_page_config(page_title="Interactive Stock Dashboard", layout="wide")
 
 # Sidebar: Stock Input
-st.sidebar.title("Stock Selection")
+st.sidebar.title("HOME")
 stock_name = st.sidebar.text_input("Enter Stock Symbol", value="reliance.ns", max_chars=20).upper()
 start_date = st.sidebar.date_input("Start Date", pd.to_datetime("2024-01-01"))
 end_date = st.sidebar.date_input("End Date", pd.to_datetime("2024-12-31"))
@@ -61,24 +64,11 @@ with tab_home:
 
 # Buy/Sell Signals Tab
 with tab_signals:
-    st.title("💹 Buy/Sell Signals")
-    buy_df = pd.DataFrame({"Date": list(buy_signals), "Signal": ["Buy"] * len(buy_signals)})
-    sell_df = pd.DataFrame({"Date": list(sell_signals), "Signal": ["Sell"] * len(sell_signals)})
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("### Buy Signals")
-        st.dataframe(buy_df)
-    with col2:
-        st.markdown("### Sell Signals")
-        st.dataframe(sell_df)
+    app()
 
 # Predicted Trends Tab
 with tab_trends:
-    st.title("📊 Predicted Trends")
-    fig_trend = go.Figure()
-    fig_trend.add_trace(go.Scatter(x=stock_data.index, y=stock_data['Close'], mode='lines', name="Stock Price"))
-    fig_trend.update_layout(title=f"Predicted Stock Trend for {stock_name}", xaxis_title="Date", yaxis_title="Price")
-    st.plotly_chart(fig_trend, use_container_width=True)
+    lstm()
 
 # Sentiment Analysis Tab
 with tab_analysis:
